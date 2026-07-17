@@ -4,6 +4,7 @@ Upload these files from `arxiv/v.2/paper/` for the replacement submission:
 
 - `main.tex`
 - `references.bib`
+- `main.bbl`
 - `EmbodiedBehaviors.pdf`
 - `CTracking.pdf`
 - `BootSafePose.pdf`
