@@ -1,0 +1,29 @@
+\begin{thebibliography}{1}
+
+\bibitem{kahneman2011thinking}
+Daniel Kahneman.
+\newblock {\em Thinking, Fast and Slow}.
+\newblock Farrar, Straus and Giroux, 2011.
+
+\bibitem{kawaharazuka2024realworld}
+Kento Kawaharazuka, Tatsuya Matsushima, Andrew Gambardella, Jiaxian Guo, Chris
+  Paxton, and Andy Zeng.
+\newblock Real-world robot applications of foundation models: A review, 2024.
+
+\bibitem{xu2024survey}
+Zhiyuan Xu, Kun Wu, Junjie Wen, Jinming Li, Ning Liu, Zhengping Che, and Jian
+  Tang.
+\newblock A survey on robotics with foundation models: toward embodied ai,
+  2024.
+
+\bibitem{arkin1998behavior}
+Ronald~C. Arkin.
+\newblock {\em Behavior-Based Robotics}.
+\newblock MIT Press, 1998.
+
+\bibitem{brooks1991intelligence}
+Rodney~A. Brooks.
+\newblock Intelligence without representation.
+\newblock {\em Artificial Intelligence}, 47(1--3):139--159, 1991.
+
+\end{thebibliography}
