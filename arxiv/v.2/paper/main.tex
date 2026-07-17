@@ -2,7 +2,6 @@
 \usepackage[margin=1in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage{lmodern}
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{array}
@@ -11,13 +10,11 @@
 \usepackage{hyperref}
 \usepackage{xcolor}
 
-\graphicspath{{../../}}
-
 \hypersetup{
   colorlinks=true,
   linkcolor=blue,
   urlcolor=blue,
-  pdftitle={From ERS-111 Behavior Diagrams to Distributed Embodiment},
+  pdftitle={A Behavioral State Vocabulary in Sony ERS-111 R-CODE},
   pdfauthor={Dr. Christopher A. Tucker}
 }
 
@@ -27,7 +24,7 @@
 \renewcommand{\headrulewidth}{0pt}
 \renewcommand{\footrulewidth}{0pt}
 
-\title{From ERS-111 Behavior Diagrams to Distributed Embodiment:\\SOFTSIM and GA144 as an Executable Framework}
+\title{A Behavioral State Vocabulary in Sony ERS-111 R-CODE}
 \author{Dr.\ Christopher A.\ Tucker}
 \date{}
 
@@ -35,278 +32,548 @@
 \maketitle
 
 \begin{abstract}
-This paper proposes a follow-on implementation framework derived from
-prior analysis of Sony \texttt{ERS-111} \texttt{R-CODE} behavior
-diagrams. The earlier corpus study showed that many sample routines are
-organized around a compact embodied state vocabulary centered on
+This paper presents a corpus-level analysis of generated behavior
+diagrams derived from Sony's \texttt{R-CODE} sample distribution for the
+\texttt{ERS-111} \texttt{AIBO}. Rather than reading each script in
+isolation, the study compares named states across the corpus to
+identify the recurring control vocabulary that structures the sample
+set. The resulting aggregate shows that many superficially different
+routines are built from a compact embodied grammar centered on
 initialization, sensing, iterative action, synchronization, and
-recovery. The present paper asks how such behavioral organization may
-be carried toward executable distributed control. Its central claim is
-that behavior diagrams can function not only as descriptive artifacts,
-but also as executable organizational models when they are mapped onto
-communicating node ensembles, initialized through the documented
-GreenArrays workflow, and exercised functionally in \texttt{SOFTSIM}.
-In this framing, \texttt{SOFTSIM} serves as a functional execution and
-inspection environment, while \texttt{GA144} provides a candidate
-distributed asynchronous hardware target for studying fast reactive
-loops, slower supervisory intervention, and low-energy embodied control
-organization.
+recovery. It further shows that this vocabulary supports a graded scale
+of rising behavioral complexity, from capability activation and startup
+regularization to monitored locomotion, environmental decision loops,
+and fuller mode-based control. In addition to historical analysis, the
+paper argues that this form of state-based abstraction is useful as an
+intermediate representation for constructing new encapsulated behavior
+routines, especially on constrained native robotic systems where
+deterministic control, direct hardware access, and modular behavioral
+composition remain important.
 \end{abstract}
 
 \section*{Introduction}
 
-This paper is a follow-on to the \texttt{ERS-111} behavior-diagram
-study rather than a replacement for it. The earlier paper was closed
-around the corpus itself: it aggregated the generated
-\texttt{R-CODE} diagrams, identified their recurring state vocabulary,
-and argued that apparently different routines are often built from a
-compact embodied grammar. That result remains the starting point here,
-but not the final objective.
+This paper examines the generated \texttt{ERS-111} \texttt{R-CODE}
+behavior diagrams as a single behavioral corpus rather than as an
+assortment of independent scripts. Its objective is to identify the
+common control vocabulary that structures the sample set,
+distinguishing recurring foundational states from those that appear
+only within more specialized variants.
 
-The present question is implementation-oriented. If a robot behavior
-corpus can be described as a recurring state vocabulary, can that same
-vocabulary support a path toward executable distributed control? More
-specifically, can behavior diagrams be treated as organizational models
-for implementation on a communicating many-node substrate rather than
-only as retrospective diagrams of legacy code?
+This framing is useful in part because many contemporary robotics
+systems still exhibit a persistent imbalance between deliberation and
+embodiment. They may perform well in perception benchmarks, scripted
+manipulation pipelines, or high-level planning tasks, yet remain
+comparatively weak in the continuous background competencies that allow
+an animal or human to remain viable in the world while doing something
+else. As a heuristic analogy, one may think here of a layered
+\texttt{System 1} and \texttt{System 2} organization: fast,
+low-latency, embodied monitoring and response on one side, and slower,
+more reflective or task-selective decision processes on the other. In
+the psychological literature, these terms generally distinguish rapid,
+automatic, and largely background cognition from slower, more
+deliberative reasoning \cite{kahneman2011thinking}. Many current robot architectures are still
+stronger on the deliberative
+side than on the deep integration of these everyday embodied loops.
+The value of the \texttt{R-CODE} corpus, therefore, is not that it
+solves that modern problem in full, but that it gives a compact
+historical example of behavior being organized around persistent bodily
+monitoring, recovery, local branching, and return-to-loop coordination
+rather than around isolated commands alone \cite{kawaharazuka2024realworld,xu2024survey}.
 
-This question matters because current robotics research increasingly
-distinguishes between faster embodied control and slower supervisory or
-reasoning layers. In contemporary work, low-latency action generation
-and higher-level semantic or deliberative guidance are often separated
-functionally even when they remain tightly coupled in deployment
-\textit{(Zhu et al., 2024; Bjorck et al., 2025; Song et al., 2025)}.
-The present work does not claim priority over that general idea.
-Instead, it explores a different contribution: how a compact
-behavioral vocabulary may be instantiated, inspected, and eventually
-realized on a distributed asynchronous substrate.
+The paper makes four main contributions. First, it provides a corpus
+aggregate over the currently generated \texttt{ERS-111} diagrams and
+identifies the most common state titles and their frequencies. Second,
+it uses that aggregate to argue that the corpus is organized around a
+compact, reactive, embodied state vocabulary rather than around
+unrelated one-off routines. Third, it shows that this vocabulary has a
+graded internal structure: across examples running from capability
+activation, to startup regularization, to monitored locomotion, to
+local interaction branching, to obstacle-dependent decision loops, and
+finally to task-specific mode control, the corpus provides a visible
+scale of rising behavioral complexity. Fourth, it treats that
+abstraction not only
+as an analytic device for legacy code, but also as a practical design
+representation for constructing new behavior routines on native robotic
+systems \cite{arkin1998behavior,brooks1991intelligence}.
 
-The paper makes four main contributions. First, it restates the
-\texttt{ERS-111} corpus result in the narrower form needed for
-implementation work: the diagrams expose a compact embodied state
-vocabulary rather than a collection of unrelated scripts. Second, it
-shows that the GreenArrays documentation provides a continuous
-toolchain from per-node implementation through declarative
-initialization to functional simulation. Third, it argues that
-behavior diagrams can be treated as executable organizational models
-for distributed control rather than only as analytic artifacts.
-Fourth, it defines a conservative experiment program in which
-\texttt{SOFTSIM} is used for functional execution and inspection while
-\texttt{GA144} remains the hardware target for later realization rather
-than a source of premature timing claims.
+\section*{Method and Corpus}
 
-\section*{Background from ERS-111}
+These totals provide the first numerical outline of the corpus. Their
+value is not solely descriptive. They help determine whether the sample
+set is broad but structurally diffuse, or whether many distinct scripts
+are constructed from a comparatively compact set of recurring state
+forms. In this respect, the totals establish a baseline for assessing
+how much behavioral variation is produced from how little underlying
+control vocabulary.
 
-The prior \texttt{ERS-111} study matters here because it supplies the
-abstraction that this paper seeks to operationalize. At corpus scale,
-the generated \texttt{R-CODE} diagrams repeatedly returned to a small
-set of state-types such as \texttt{Sense / Decide},
-\texttt{Action Loop}, \texttt{Boot / Safe Pose},
-\texttt{Synchronize}, \texttt{Sense Fall State}, and
-\texttt{Recover}. The significance of that finding was not merely that
-one title appeared more frequently than another. The stronger result
-was that many distinct routines were organized through repeated
-recombination of a compact reactive and embodied control vocabulary.
+The following corpus totals are included as a compact numerical
+reference point for the discussion that follows. They identify the size
+of the diagram set, the total number of state occurrences observed
+across it, and the number of distinct state titles from which that
+behavioral variation is constructed.
 
-That result provides a useful bridge for implementation work. If
-behavior can be described at the level of recurring compartments such
-as initialization, sensing, bounded action, synchronization, and
-recovery, then those compartments can in principle be mapped onto
-concrete execution units. The present paper therefore uses the
-\texttt{ERS-111} corpus not as its primary object of analysis, but as
-the source of a compact behavioral grammar that may be carried forward
-into implementation experiments.
-
-\section*{GreenArrays Toolchain}
-
-The GreenArrays documentation supplies the implementation path required
-for this next step. \texttt{DB001} describes the \texttt{F18A} node as
-a highly constrained asynchronous processing element with local memory,
-direct port execution, and communication semantics centered on
-suspension and handoff across neighboring nodes. This matters because
-it means that distributed behavior is not added as an afterthought.
-Communication is part of the machine model itself.
-
-\texttt{DB013 Chapter 4} shows how code is assembled per node and
-stored through the object-bin workflow. That chapter is important
-because it demonstrates that the programmer is not targeting a single
-flattened image alone, but a persistent collection of node-local
-artifacts. \texttt{DB013 Chapter 6} then shows how those artifacts can
-be gathered into a Boot Descriptor Language workflow that defines how a
-multi-node configuration is initialized and streamed into execution.
-
-\texttt{DB013 Chapter 7} completes the path by documenting
-\texttt{SOFTSIM} as a high-level software simulator for up to two
-\texttt{GA144} chips. Its role is not to reproduce physical timing
-faithfully, but to provide functional execution, operator inspection,
-stepping, and breakpoint control for distributed node programs. That
-distinction is critical. The present paper therefore uses
-\texttt{SOFTSIM} as a functional and observational environment, not as
-a timing-accurate proof of hardware behavior.
-
-Taken together, these chapters define a continuous workflow:
-
-\begin{center}
-\texttt{node implementation -> object bins -> BDL initialization -> SOFTSIM execution -> GA144 realization}
-\end{center}
-
-That continuity is one of the main reasons the GreenArrays environment
-is relevant to the present paper. It offers a concrete bridge from
-behavioral organization to executable distributed embodiment.
-
-\section*{Behavior Diagrams as Executable Models}
-
-The central interpretive claim of this paper is that behavior diagrams
-can be promoted from descriptive visualizations into executable
-organizational models. A state diagram already distinguishes stable
-behavioral compartments, entry conditions, transition conditions, and
-return paths. These distinctions are analytically useful on their own,
-but they are also structurally close to what distributed implementation
-requires.
-
-On a node-based asynchronous substrate, one can treat each state as a
-small executable routine with bounded responsibilities. Some states may
-remain local to a single node. Others may be split across
-communicating nodes when sensing, local action, and supervisory
-intervention should be kept distinct. In this view, the transition
-structure functions as an implementation guide: it suggests where
-behavior must remain local, where communication must occur, and where
-synchronization or recovery paths need to be observable.
-
-This is not yet a claim that every behavior diagram should be mapped
-one-to-one onto hardware nodes. It is a more modest claim. The
-diagrams provide a tractable intermediate representation that can guide
-distributed implementation decisions while preserving behavioral
-clarity. They help identify what is stable in the organization of a
-behavior even when the sensing words, actuation words, or supervisory
-policies later change.
-
-\section*{Fast and Slow Cadence}
-
-Recent robotics literature gives added relevance to this approach by
-showing that explicit fast/slow or dual-system decompositions are now
-common enough to support comparison. In \texttt{GR00T N1}, \texttt{Hume},
-and \texttt{Language-Conditioned Robotic Manipulation with Fast and
-Slow Thinking}, faster reactive or action-generation layers are paired
-with slower supervisory, semantic, or reasoning-capable layers
-\textit{(Zhu et al., 2024; Bjorck et al., 2025; Song et al., 2025)}.
-
-The present work does not claim that the GreenArrays environment
-already matches the scale or capability of those systems. Its value is
-different. It offers a small, inspectable, distributed implementation
-framework in which a similar cadence can be studied concretely. In the
-working interpretation used here, fast reactive behavior corresponds to
-local low-latency node execution, while slower supervisory behavior
-corresponds to a less frequent layer that modulates or redirects local
-loops.
-
-Within that framing, \texttt{GA144} is valuable not because it replaces
-contemporary large-scale robot foundation models, but because it offers
-a contrasting substrate for embodied control experiments. As a
-distributed asynchronous many-node device, it supports organizing
-behavior as multiple small communicating reactive processes rather than
-as one monolithic controller. This is especially relevant for the
-present work because it provides a plausible low-energy hardware target
-for the reactive layer while \texttt{SOFTSIM} provides the functional
-environment needed to inspect node state, communication, and
-supervisory handoff before stronger hardware claims are made.
-
-\section*{Experiment Program}
-
-The experiment program proposed here is deliberately conservative. Its
-purpose is not to demonstrate superiority over current embodied AI
-systems, nor to make timing claims that \texttt{SOFTSIM} cannot
-support. Its purpose is to establish a credible sequence of executable
-evidence.
-
-The first paper-facing target in that sequence should be the existing
-\texttt{Move} diagram from the \texttt{ERS-111} study. \texttt{Move}
-is compact, reactive, and already organized around a loop of repeated
-action, fall sensing, recovery, and return to execution. That makes it
-the best first candidate for a direct diagram-to-program mapping using
-the documented \texttt{1737}-style minimal load path in
-\texttt{SOFTSIM}. The immediate implementation goal is not yet a full
-locomotion controller, but a minimal structural mutation of the
-\texttt{1737} baseline whose repeated region, alternate region, and
-return-to-loop behavior correspond to the main organizational features
-of \texttt{Move}. A second small target should then be a reduced
-recovery-oriented control slice centered on \texttt{Boot / Safe Pose},
-\texttt{Sense Fall State}, \texttt{Recover}, and \texttt{Action Loop},
-rather than a more specialized family such as \texttt{Football}.
+The method used here is deliberately simple and explicit. Behavior
+diagrams were generated from the \texttt{ERS-111} sample corpus, state
+titles were normalized where placeholder labels still obscured their
+functional role, and the resulting state names were then counted
+across the generated set. The aim is not to claim that the titles
+alone exhaust the semantics of the original code, but to show that the
+state layer is already rich enough to expose a stable behavioral
+grammar at corpus scale. Once that aggregate was established,
+representative diagrams were then compared as a graded sequence in
+order to test whether the same shared vocabulary also supports a
+visible progression of increasing control complexity across different
+behavior families.
 
 \begin{itemize}
-\item establish that the local \texttt{SOFTSIM} installation is a usable functional execution environment
-\item preserve a smallest confirmed baseline such as the documented \texttt{1737} example
-\item demonstrate a minimal one-node mutation that proves custom executable behavior is possible
-\item demonstrate a minimal two-node reactive/supervisory handoff
-\item make node-local state and communication markers observable during execution
-\item carry at least one stable organization toward later realization on \texttt{GA144}
+\item diagrams counted: \texttt{54}
+\item total state instances: \texttt{292}
+\item unique state titles: \texttt{47}
 \end{itemize}
 
-This sequence matters because it distinguishes functional evidence from
-hardware-performance evidence. If the sequence succeeds in
-\texttt{SOFTSIM}, it supports claims about executable organization,
-inspection, and distributed behavioral decomposition. If a later
-hardware realization succeeds on \texttt{GA144}, it supports the
-stronger claim that at least one such organization survives translation
-onto the physical substrate. It still would not by itself prove
-large-scale robot-level capability, but it would validate the
-implementation pathway.
+The state-title aggregate makes it possible to treat the Sony
+\texttt{ERS-111} \texttt{R-CODE} samples as a behavioral corpus rather than
+as an assortment of independent scripts. The most immediate result is
+the repeated reuse of a small control vocabulary. The most common
+titles, especially \texttt{Sense / Decide}, \texttt{Action Loop},
+\texttt{Boot / Safe Pose}, \texttt{Synchronize}, \texttt{Boot},
+\texttt{Sense Fall State}, and \texttt{Recover}, indicate that the
+dominant form in the corpus is not an extended linear routine. Instead,
+it is a recurrent embodied loop in which the robot establishes a viable
+posture, samples some portion of its body or local environment,
+selects an action, allows that action to settle, and then returns to
+monitoring.
 
-\section*{Claim Boundaries}
+This finding is significant because it indicates that the surface
+diversity of the scripts exceeds their structural diversity. A football
+behavior, an obstacle routine, a contact-response behavior, and a
+locomotion loop may differ in immediate purpose, yet the aggregate
+shows that they are often composed from the same recurring internal
+elements. The corpus is therefore not simply a set of demonstrations of
+what AIBO can do; it is also evidence of how Sony's \texttt{R-CODE}
+sample distribution organized behavior. The repetition of these core
+titles suggests a practical design grammar in which behavior is
+assembled through recombination of a small number of stable
+state-types.
 
-Because this work sits between historical analysis and future hardware
-implementation, its claim boundaries must remain explicit.
+The highest-frequency title, \texttt{Sense / Decide}, is particularly
+important. Its prominence suggests that much of the corpus is organized
+around conditional interpretation rather than predetermined motion
+playback alone. The scripts repeatedly evaluate the present situation
+and determine which state should follow. This places the sample set
+closer to reactive robotics than to simple animation. When considered
+alongside the strong presence of \texttt{Action Loop} and
+\texttt{Synchronize}, it points to a common sequence: evaluate, act,
+wait for bodily completion, and reevaluate. This is a compact yet
+robust pattern for embodied behavior \cite{arkin1998behavior,brooks1991intelligence}.
 
-\textbf{What can be claimed safely.} The prior \texttt{ERS-111} corpus
-study identified a compact embodied state vocabulary. The GreenArrays
-documentation defines a continuous path from per-node implementation
-through declarative initialization to functional simulation. Live local
-execution confirms that \texttt{SOFTSIM} can load, step, and inspect
-distributed node programs. These points support the claim that behavior
-diagrams can function as executable organizational models in a
-distributed asynchronous implementation workflow.
+The frequent appearance of \texttt{Boot} and \texttt{Boot / Safe Pose}
+is likewise meaningful. These states show that initialization is not
+treated as an incidental preface but as part of the logic of behavior
+itself. The robot is repeatedly brought into a known physical and
+control condition before more specific behavior begins. Even these
+relatively early or simple scripts therefore assume that behavior
+depends on a stable bodily baseline. In robotics terms, the robot's
+initial pose and internal setup form part of the control architecture
+rather than a mere setup convenience.
 
-\textbf{What should not yet be claimed.} The present evidence does not
-show timing fidelity in \texttt{SOFTSIM}, does not demonstrate
-superiority to contemporary foundation-model robot architectures, and
-does not prove robot-level performance on real embodied tasks. It also
-does not show that every behavior diagram admits a simple one-to-one
-mapping onto node hardware.
+The recurring appearance of \texttt{Sense Fall State} and
+\texttt{Recover} is among the most revealing findings. It indicates
+that bodily failure is not peripheral within the corpus. The robot's
+viability as a moving body is part of the logic that organizes
+behavior. The code does not merely issue movements and assume continued
+stability; it repeatedly checks whether posture has degraded and routes
+control through recovery when necessary. This reflects a strongly
+embodied orientation in the sample set. The robot is managing itself as
+a physical agent in the world, not merely executing isolated commands.
 
-These boundaries do not weaken the contribution. Rather, they define it
-more clearly. The paper's value lies in identifying and operationalizing
-a tractable bridge between behavioral abstraction and executable
-distributed embodiment.
+The lower-frequency state titles are equally informative because they
+show where specialization enters the corpus. Titles such as
+\texttt{Left Kick}, \texttt{Right Kick}, \texttt{Start Ball Tracking},
+and \texttt{It approaches a ball by the angle of the head} belong to
+narrower families such as \texttt{Football} and related variants. Their
+lower counts indicate that these states do not belong to the
+corpus-wide backbone. Instead, they function as family-specific
+elaborations layered onto the more common loop of sensing, action,
+synchronization, and recovery. This distinction helps separate general
+architecture from task-specific extension.
+
+The same holds for titles such as \texttt{Happy Hug Response},
+\texttt{Idle Thought}, \texttt{Baby Sway Forward},
+\texttt{Select First Average}, and \texttt{Reset Sample Count}. These
+are analytically useful because they show how the shared control
+vocabulary is directed toward different ends: social contact,
+expressive motion, temporary local computation, and directional
+averaging, among others. Their rarity, however, indicates that they are
+local elaborations rather than dominant organizational principles. In
+aggregate, the sample set is therefore less a collection of unrelated
+unique behaviors than a set of behaviors constructed from a relatively
+compact repertoire of reusable state-forms.
+
+The elimination of placeholder titles was analytically important.
+Names such as \texttt{State 200}, \texttt{State 1011},
+\texttt{State 1110}, and \texttt{State 1200} obscured the functional
+meaning the aggregate was meant to recover. These were temporary labels
+introduced during extraction when numeric state identifiers from the
+source scripts had not yet been resolved into functional names.
+Renaming them as
+\texttt{Quit Behavior}, \texttt{Reset Sample Count},
+\texttt{Select First Average}, and \texttt{Reset Scan Counter} made
+those states legible as behavioral units rather than residual labels
+from the original scripts. Once the placeholders were removed, the
+count no longer mixed structural meaning with accidental naming
+residue. The aggregate therefore became not merely a quantitative list,
+but a more reliable semantic map of the corpus.
+
+Taken together, the aggregate supports a clear interpretation: the
+\texttt{ERS-111} \texttt{R-CODE} samples are organized around a compact
+embodied state vocabulary that is repeatedly recombined across
+different behavior families. The counts show that the common
+foundation is reactive and bodily grounded, while the rarer states
+indicate where the families diverge into specialized task or expressive
+behavior. This provides a clearer basis for discussing the material in
+both historical and technical terms. Historically, it suggests that
+Sony's samples already embodied a recognizable control grammar.
+Technically, it indicates that many apparently distinct behaviors can
+be understood as variations on a shared loop of setup, sensing,
+decision, action, stabilization, and recovery.
+
+The aggregate also carries broader significance for robotics. State
+titles and transitions are not useful only for analyzing legacy AIBO
+scripts; they express a more general principle of robot control.
+Advanced systems likewise distinguish among modes such as searching,
+tracking, avoiding, recovering, and interacting. What changes over time
+is the richness of those states, the sophistication of their triggers,
+and the layering of control above and below them. In this respect, the
+\texttt{ERS-111} sample corpus offers a small but concrete example of
+how complex robotic behavior can emerge through repeated reuse of a
+compact state-transition architecture \cite{arkin1998behavior,brooks1991intelligence}.
+
+The tables below make that distinction easier to see directly. The first
+table captures the high-frequency state titles that form the recurring
+structural backbone of the corpus. The second table gathers the
+lower-frequency titles that appear more locally, often within narrower
+behavior families or single specialized variants.
+
+\section*{Most Common State Titles}
+
+\begin{center}
+\begin{tabular}{>{\ttfamily}r l}
+\toprule
+Count & State Title \\
+\midrule
+56 & Sense / Decide \\
+51 & Action Loop \\
+36 & Boot / Safe Pose \\
+32 & Synchronize \\
+18 & Boot \\
+14 & Sense Fall State \\
+14 & Recover \\
+13 & Head Scan Position \\
+8 & Repeat Forward Walk \\
+4 & Left Kick \\
+4 & Right Kick \\
+3 & It approaches a ball by the angle of the head \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+These more common titles provide the clearest expression of the shared
+behavioral grammar that runs through the sample set. They show where
+Sony's examples repeatedly return to the same embodied control
+concerns: establishing posture, assessing conditions, selecting
+actions, waiting for movement to settle, and recovering when the body
+is no longer in a viable state.
+
+\section*{Secondary State Titles}
+
+\begin{center}
+\begin{longtable}{>{\ttfamily}r p{4.3in}}
+\toprule
+Count & State Title \\
+\midrule
+\endhead
+2 & Quit Behavior \\
+2 & Start Ball Tracking \\
+2 & Mode \\
+2 & Slow Forward Walk \\
+1 & Main \\
+1 & Increment Lost Counter \\
+1 & Reset Lost Counter \\
+1 & Set Search Mode \\
+1 & Turn Left \\
+1 & Shift Left \\
+1 & Advance Left \\
+1 & Search Turn \\
+1 & Shift Right \\
+1 & Advance Right \\
+1 & Forward Walk \\
+1 & Happy Hug Response \\
+1 & It sleeps until it is set up \\
+1 & Idle Thought \\
+1 & Baby Sway Forward \\
+1 & Baby Sway Backward \\
+1 & When there was an obstacle in front \\
+1 & Reset Sample Count \\
+1 & When Distance became less than 300 \\
+1 & At the time of loop\_cnt=1 \\
+1 & At the time of loop\_cnt=2 \\
+1 & Wait loop end \\
+1 & Select First Average \\
+1 & Reset Scan Counter \\
+1 & Start \\
+1 & Load Stored Poses \\
+1 & Save Current Poses \\
+1 & Resume Listener \\
+1 & MainLoop \\
+1 & Clear Light Playback \\
+1 & Power Down \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+Taken together, the secondary titles show where the common architecture
+branches into more specific local roles. They capture narrower aspects
+of the corpus: expressive reactions, temporary counters, intermediate
+scan steps, branch-specific motor decisions, and other states that are
+important within individual families without dominating the corpus as a
+whole.
+
+\section*{Representative Behavior Diagrams}
+
+This section presents the paper's second line of evidence in visual
+form. Alongside the corpus-level aggregate, it offers a graded
+behavioral ladder that makes one of the paper's stronger claims
+directly visible: the shared control vocabulary of the \texttt{R-CODE}
+corpus is not only recurrent, but scalable. It supports a progression
+from minimal activation and startup organization, through monitored
+movement, contact-conditioned response, and obstacle-dependent decision
+loops, to fuller task-specific mode control. Read in that order, the
+figures do not merely illustrate isolated scripts. They demonstrate
+that the corpus contains a usable scale of rising behavioral
+complexity, and therefore a more precise basis for comparing
+sophistication across routines.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.86\textwidth]{EmbodiedBehaviors.pdf}
+\caption{The embodied behavior aggregate provides a corpus-level view of
+the recurring control vocabulary. It makes visible the repeated
+dependence on shared states such as sensing, looping, synchronization,
+and recovery across otherwise distinct behaviors.}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{ccc}
+\includegraphics[width=0.20\textwidth]{CTracking.pdf} &
+\includegraphics[width=0.21\textwidth]{BootSafePose.pdf} &
+\includegraphics[width=0.24\textwidth]{Move.pdf} \\
+\texttt{C-Tracking} &
+\texttt{Boot / Safe Pose} &
+\texttt{Move} \\
+\includegraphics[width=0.24\textwidth]{ContactResponse.pdf} &
+\includegraphics[width=0.28\textwidth]{Maze.pdf} &
+\includegraphics[width=0.22\textwidth]{Football.pdf} \\
+\texttt{Contact Response} &
+\texttt{Maze} &
+\texttt{Football}
+\end{tabular}
+\caption{A compact comparison ladder from minimal activation to explicit
+mode control. Read left to right, top to bottom, the reductions show a
+graded increase in behavioral organization: capability activation,
+startup regularization, monitored locomotion, local interaction
+branching, obstacle-dependent decision loops, and finally multi-state
+task control.}
+\end{figure}
+
+Read analytically, each step in the ladder adds a distinct control
+commitment. \texttt{C-Tracking} stands closest to capability
+activation: it enters a single role and then yields control back with
+little visible internal differentiation. \texttt{Boot / Safe Pose}
+already deepens the picture by showing that initialization is itself a
+behavioral unit: before task execution, the robot is brought into a
+known bodily and control condition. \texttt{Move} adds persistent
+embodied monitoring, since forward locomotion is no longer treated as a
+one-shot act but as a loop checked against fall state and routed
+through recovery when posture degrades. \texttt{Contact Response}
+introduces local conditional branching around interaction, showing that
+the same shared backbone can be redirected toward expressive or social
+response rather than locomotion alone.
+
+\texttt{Maze} marks the important intermediate threshold at which the
+behavior becomes visibly decision-structured. Here the robot does not
+merely continue, stop, or recover. It repeatedly samples the local
+environment, compares distance conditions, redirects action when an
+obstacle appears, and then re-enters a sampling cycle. That pattern is
+more than reactive repetition; it is a compact decision loop organized
+around environmental comparison and controlled reorientation.
+\texttt{Football} extends that same logic into fuller task-specific
+mode control. Search, ball tracking, approach, kick selection, loss
+handling, and recovery appear as linked but differentiated
+sub-behaviors. The analytical value of the sequence is therefore not
+just that later diagrams contain more states. It is that one can watch,
+step by step, the growth from activation, to initialization, to
+monitored action, to conditional interaction, to environmental
+decision, and finally to persistent multi-state embodied organization.
+
+\section*{The Purpose of Aggregation}
+
+This aggregate is intended to show which control structures are broadly
+shared across the \texttt{ERS-111} \texttt{R-CODE} set and which belong
+only to narrower behavior families. The counts are analytically useful
+not because they rank scripts by popularity, but because they reveal
+the shared behavioral grammar of the corpus: the points at which the
+code repeatedly returns to sensing, looping, synchronization, and
+recovery before adding more specialized states for pursuit, contact
+response, or expressive variation.
+
+This analysis is relevant beyond \texttt{AIBO}, because the same
+pattern appears in many embodied robotic systems: a stable loop of
+sensing, deciding, acting, and rechecking the body and local
+environment before continuing. Viewed in this way, the
+\texttt{ERS-111} samples are not only historically interesting
+artifacts. They also provide an early small-scale example of how
+robotics often develops in practice, by building richer task-specific
+states on top of a compact base of posture control, environmental
+monitoring, transition handling, and recovery \cite{kawaharazuka2024realworld,xu2024survey}.
+
+The principal result is not simply that one state title appears more
+often than another. The stronger result is that the diagram set
+repeatedly converges on the same architectural pattern:
+
+\begin{center}
+\texttt{initialize -> sense -> decide -> act -> synchronize -> repeat}
+\end{center}
+
+This indicates that the preserved \texttt{ERS-111} samples already
+express a recognizable embodied control style. Even when the surface
+behaviors appear different, the underlying workflow is usually a
+compact reactive cycle rather than a one-shot animation or an extended
+scripted narrative. The graded comparison ladder strengthens this claim
+by showing that the same recurring backbone does not merely repeat. It
+also admits ordered elaboration, so that increasingly complex routines
+can be compared as staged extensions of a common control base.
+
+A second important result is that bodily maintenance appears within the
+recurring structure itself. The regular presence of \texttt{Sense Fall
+State} and \texttt{Recover} shows that the robot's posture and
+stability are treated as part of behavior control rather than as
+external exceptions. In analytical terms, the corpus concerns not only
+the issuance of motion, but the maintenance of viable motion in the
+body.
+
+A third result is that the corpus provides an explicit scale of rising
+behavioral sophistication rather than a flat inventory of scripts.
+\texttt{C-Tracking}, \texttt{Boot / Safe Pose}, \texttt{Move},
+\texttt{Contact Response}, \texttt{Maze}, and \texttt{Football} do not
+only differ in theme. They expose successive increases in control
+organization: activation, initialization, monitored continuity,
+interaction branching, environmental decision structure, and persistent
+mode control. This graded structure makes the sample set more useful
+analytically because it gives the reader a principled way to compare
+behavior families by depth of organization rather than by task label
+alone.
+
+A fourth result is that the more specialized behaviors remain legible
+because they are layered on top of that common base. Pursuit and kick
+states in the \texttt{Football} family, for example, do not replace the
+core reactive loop; they extend it. Complexity in the sample set tends
+to accumulate by adding narrower decision and action states to an
+already stable embodied architecture.
+
+Taken together, these findings clarify the central purpose of this
+paper. The \texttt{R-CODE} sample set can be read as an early
+behavioral design vocabulary in which a limited number of state-types
+are repeatedly recombined to produce locomotion, orientation, contact
+response, recovery, and more specialized goal-directed action. The
+importance of the aggregate, therefore, lies not simply in documenting
+individual scripts, but in revealing the shared organizational logic
+that makes those scripts analytically comparable. What may initially
+appear to be a heterogeneous collection of sample behaviors instead
+emerges as a coherent control corpus whose recurring state structures
+offer a foundation for historical interpretation, comparative
+analysis, and broader discussion of embodied robot behavior. Just as
+important, the graded ladder shows that this shared logic has internal
+depth: the corpus supports a visible progression from simple activation
+to richer state-governed behavioral organization. That progression is a
+core contribution of the paper because it turns the corpus into a scale
+for reasoning about increasing control complexity rather than a mere
+catalog of examples.
+
+This approach is also constructive rather than merely descriptive.
+Once the common structure of a behavior corpus has been made explicit,
+those states can be treated as reusable design units for new robotic
+systems. Instead of writing a new routine as a monolithic block of
+control code, one can begin from a small library of encapsulated
+behavioral forms: initialize posture, sense local conditions, branch by
+event, execute a bounded action, verify bodily state, and return to a
+monitoring loop. The diagrams therefore function not only as
+retrospective analysis, but as a practical intermediate representation
+for synthesis. They help make clear which elements should remain stable
+across platforms and which may be replaced to accommodate different
+sensors, actuators, timing models, or task domains \cite{arkin1998behavior}.
+
+That design value becomes especially important in native-hardware
+robotics developed in a polyForth style. In such environments,
+behavior is often assembled from compact words, explicit stacks, direct
+device access, and tightly bounded control loops rather than from large
+framework abstractions. A state-based representation is well matched to
+that discipline because each state can be implemented as a small,
+testable routine with clear entry conditions, side effects, and exit
+transitions. The transition structure then serves as the behavioral
+scheduler. This makes it easier to preserve determinism, reason about
+timing, and isolate hardware-specific code inside a limited number of
+sensing and actuation words while leaving the higher-level behavioral
+organization intact.
+
+For newer classes of robot systems, this means the method supports both
+portability and invention. A locomotion platform, a manipulator, or a
+socially interactive robot may differ greatly in embodiment, but each
+still benefits from an architecture that separates posture management,
+environmental interpretation, action execution, exception handling, and
+return-to-loop coordination. By treating those elements as explicit
+behavioral compartments, developers can introduce characteristic new
+routines without losing architectural clarity. In practical terms, one
+can retain the same behavioral skeleton while substituting new state
+contents for vision, force sensing, gait control, manipulation,
+dialogue, or safety recovery. The result is a disciplined path for
+building novel robot behavior on constrained native systems without
+collapsing all control logic into a single opaque procedure.
 
 \section*{Conclusion}
 
-The original \texttt{ERS-111} behavior-diagram paper established that
-the Sony \texttt{R-CODE} corpus is organized around a compact embodied
-state vocabulary. The present follow-on paper asks what that result can
-be used for. Its answer is that such a vocabulary can serve as an
-intermediate representation between historical behavior diagrams and
-distributed executable control.
+States and transitions are significant because they provide a robot
+with a means of organizing time, context, and response rather than
+reacting through a flat sequence of commands. A state indicates the
+mode in which the robot is currently operating, and a transition
+indicates the condition sufficient to move it into another mode. This
+structure becomes a foundation for more advanced robotics because
+sensing, motion, recovery, and task logic can remain coordinated rather
+than collapsing into an undifferentiated control stream.
 
-The GreenArrays environment is especially useful for this purpose
-because it provides a continuous path from node-local implementation,
-through declarative multi-node initialization, to functional execution
-and inspection in \texttt{SOFTSIM}, and ultimately to realization on
-\texttt{GA144}. In that sense, the contribution is not the invention of
-fast/slow embodied control as an abstract concept. It is the proposal
-of an executable framework for studying how such control may be
-organized, inspected, and carried toward hardware on a distributed
-asynchronous substrate.
+The present paper has argued that the preserved \texttt{ERS-111}
+\texttt{R-CODE} corpus already makes this principle visible in a
+practical historical setting. Its aggregate shows a recurring embodied
+control vocabulary, and its graded comparison ladder shows that this
+vocabulary scales from capability activation and startup
+regularization, through monitored movement and environmental decision
+loops, to more specialized mode-governed forms. On that basis, the
+corpus provides more than historical documentation. It offers a compact
+behavioral design language and a visible scale of control complexity
+that can support both interpretation of early robot software and
+construction of new native robotic routines. The strongest conclusion
+is therefore not only that the \texttt{ERS-111} sample set reuses a
+common behavioral grammar, but that it makes increasing behavioral
+sophistication analytically legible as a graded progression of control
+organization. That claim gives the corpus its broader value: it can be
+used not just to catalog legacy routines, but to compare, interpret,
+and eventually reconstruct increasingly rich embodied behaviors on a
+shared architectural basis.
 
-\section*{References}
-
-\begin{itemize}
-\item Arkin, Ronald C. \textit{Behavior-Based Robotics}. MIT Press, 1998.
-\item Bjorck, Johan, Eric Jang, Dibya Ghosh, et al. ``GR00T N1: An Open Foundation Model for Generalist Humanoid Robots.'' arXiv, 2025. \url{https://arxiv.org/abs/2503.14734}
-\item Brooks, Rodney A. ``Intelligence without Representation.'' \textit{Artificial Intelligence} 47, no. 1-3 (1991): 139-159.
-\item Song, Jiankai, Yilun Du, Kalyan S. Perumalla, et al. ``Hume: Toward a Universal and Fine-Grained Human-Centric Understanding Model for Embodied AI.'' arXiv, 2025. \url{https://arxiv.org/abs/2505.21432}
-\item Xu, Zhiyuan, Kun Wu, Junjie Wen, Jinming Li, Ning Liu, Zhengping Che, and Jian Tang. ``A Survey on Robotics with Foundation Models: toward Embodied AI.'' arXiv, 2024. \url{https://arxiv.org/abs/2402.02385}
-\item Zhu, Xianghao, Yizhou Wang, Junheng Hao, et al. ``Language-Conditioned Robotic Manipulation with Fast and Slow Thinking.'' arXiv, 2024. \url{https://arxiv.org/abs/2401.04181}
-\end{itemize}
+\vspace{-0.5\baselineskip}
+\bibliographystyle{unsrt}
+\bibliography{references}
 
 \end{document}

@@ -14,6 +14,11 @@ Recommended separation:
 - `notes/` for evidence, interpretation, and synthesis,
 - `scratch/` for temporary experiments that should not be mixed into paper claims.
 
+Current status:
+
+- `../v.1/` remains the version currently on arXiv.
+- `paper/` now contains the replacement candidate bundle.
+
 Template included here:
 
 - `paper/README.md` explains what is safe to promote into the next draft.

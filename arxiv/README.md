@@ -1,32 +1,18 @@
-# arXiv Bundle
+# arXiv Versions
 
-This folder contains a self-contained submission bundle for arXiv.
+This directory is the version index for the paper.
 
-Contents:
+- `v.1/`: the version currently on arXiv.
+- `v.2/paper/`: the next revision candidate intended to replace `v.1`.
+- `v.2/notes/`, `v.2/literature/`, `v.2/scratch/`: support material for the replacement draft.
+- `print/`: convenience output copies.
 
-- `main.tex`: primary LaTeX source for the paper
-- `main.pdf`: compiled PDF generated from `main.tex`
-- `EmbodiedBehaviors.pdf`
-- `Move.pdf`
-- `Football.pdf`
+Working rule:
 
-Local build:
+- preserve `v.1` as the published record,
+- make replacement-draft edits in `v.2/paper/`,
+- keep evidence, interpretation, and temporary work inside `v.2/`.
 
-```bash
-cd arxiv
-pdflatex -interaction=nonstopmode -halt-on-error main.tex
-pdflatex -interaction=nonstopmode -halt-on-error main.tex
-```
+Published arXiv record:
 
-Suggested upload set:
-
-- `main.tex`
-- `EmbodiedBehaviors.pdf`
-- `Move.pdf`
-- `Football.pdf`
-
-Published at: http://arxiv.org/abs/2607.12115
-
-## Additional references
-
-https://ziegler.substack.com/p/ep108-1x-equips-neo-with-human-level
+- http://arxiv.org/abs/2607.12115
