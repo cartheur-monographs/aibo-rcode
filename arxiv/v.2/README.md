@@ -1,28 +1,43 @@
-# arXiv v.2 Working Directory
+# v.2 Paper Workspace
 
-This directory is reserved for the next working iteration of the arXiv paper.
+This folder is for material that is intended to be promotable into the next arXiv draft.
 
-Suggested use:
+It now serves as the replacement candidate for `../../v.1/`.
 
-- keep `v.2` drafting material here,
-- leave the currently published/submitted material in the parent `arxiv/` directory untouched,
-- move exploratory notes, revised figures, and paper-safe summaries into this workspace before promoting them into the next paper draft.
+Rules:
 
-Recommended separation:
+- keep text here conservative and citation-ready,
+- only move claims here after they have been checked against sources or hardware evidence,
+- avoid mixing speculative ideas directly into draft prose,
+- if a paragraph depends on interpretation, link it back to a note in `../notes/`.
 
-- `paper/` for LaTeX sources and figures intended for the next draft,
-- `notes/` for evidence, interpretation, and synthesis,
-- `scratch/` for temporary experiments that should not be mixed into paper claims.
+Suggested contents:
 
-Current status:
+- `main.tex` or section-level LaTeX files for the next draft,
+- figure captions that are ready for paper use,
+- paper-safe summaries derived from the notes,
+- claim tracking in `claim-ledger.md`.
 
-- `../v.1/` remains the version currently on arXiv.
-- `paper/` now contains the replacement candidate bundle.
+Current bundle:
 
-Template included here:
+- `main.tex`: primary LaTeX source
+- `main.pdf`: compiled draft
+- `references.bib`: BibTeX database
+- `generate_behavior_diagrams.py`: Graphviz generator for the figure ladder
+- figure assets for `EmbodiedBehaviors`, `CTracking`, `BootSafePose`, `Move`,
+  `ContactResponse`, `Maze`, and `Football`
 
-- `paper/README.md` explains what is safe to promote into the next draft.
-- `paper/claim-ledger.md` tracks paper-facing claims and their support level.
-- `notes/README.md` defines the note-taking boundary between evidence and interpretation.
-- `notes/evidence-template.md` is a reusable template for source-backed notes.
-- `scratch/README.md` is the holding area for speculative or temporary work.
+Local build:
+
+```bash
+cd arxiv/v.2/paper
+python3 generate_behavior_diagrams.py
+pdflatex -interaction=nonstopmode -halt-on-error main.tex
+bibtex main
+pdflatex -interaction=nonstopmode -halt-on-error main.tex
+pdflatex -interaction=nonstopmode -halt-on-error main.tex
+```
+
+Current working title:
+
+- `From ERS-111 Behavior Diagrams to Distributed Embodiment: SOFTSIM and GA144 as an Executable Framework`
